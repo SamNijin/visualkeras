@@ -16,6 +16,38 @@ except:
             from keras import layers
         except:
             warnings.warn("Could not import the 'layers' module from Keras. text_callable will not work.")
+            
+def replace_sequences(layer_classes, sequence):
+    
+    print('****************************')
+    
+    for layer_class in layer_classes:
+        print(layer_class)
+        
+        
+    print(sequence)
+    # Convert layer classes to their names for easy comparison
+    layer_names = [layer_class.__name__ for layer_class in layer_classes]
+    
+    # Convert sequence to a list of class names
+    # sequence_names = [layer_class.__name__ for layer_class in sequence]
+    sequence_names=sequence
+    
+    seq_len = len(sequence_names)
+    result = []
+    i = 0
+    n = len(layer_names)
+    
+    while i < n:
+        # Check if the current slice matches the sequence
+        if i + seq_len <= n and layer_names[i:i + seq_len] == sequence_names:
+            result.append('Convolutional Block')  # Replace with a specific string
+            i += seq_len  # Skip over the sequence
+        else:
+            result.append(layer_names[i])
+            i += 1  # Move to the next element
+    
+    return result
 
 def layered_view(model, 
                  to_file: str = None, 
@@ -99,6 +131,8 @@ def layered_view(model,
 
     if type_ignore is None:
         type_ignore = list()
+    if type_ignore is not None:
+        type_ignore = list(type_ignore)
 
     if index_ignore is None:
         index_ignore = list()
@@ -391,13 +425,26 @@ def layered_view(model,
 
         if show_dimension:
             counter = 0
+            
+        new_layers = replace_sequences(layer_types, ['BatchNormalization'])
+        # new_layers.replace('Conv3D','Output')
+        value_to_find='Conv3D'
+        if value_to_find in new_layers:
+            index_to_replace = new_layers.index(value_to_find)
 
-        for layer_type in layer_types:
+            # Replace the value at that index
+            new_layers[index_to_replace] = 'OutputLayer'
+        
+        print(new_layers)
+
+        for layer_type, label in zip(layer_types, new_layers):
             if show_dimension:
                 label = layer_type.__name__ + "(" + str(dimension_list[counter]) + ")"
                 counter += 1
             else:
                 label = layer_type.__name__
+                # label = label
+                print(label, '-------------------------')
 
             
             if hasattr(font, 'getsize'):
